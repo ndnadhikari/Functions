@@ -16,6 +16,9 @@ Reduce() function in the base package.
 
 4. Factorial_mem: a version that uses memoization to compute the factorial.
 
+Please follow this link for full version 
+https://github.com/ndnadhikari/Functions/blob/master/factorial_output.txt
+
 ## Part 2: Longitudinal Data Class and Methods
 
 The purpose of this part is to create a new class for representing longitudinal data, which is data that is collected over time on a given
@@ -30,6 +33,9 @@ The following functions have been implemented in this session
 3. visit: a generic function for extracting visit-specific information
 
 4. room: a generic function for extracting room-specific information
+
+Please see total version here 
+https://github.com/ndnadhikari/Functions/blob/master/Longitudional_output.txt
 
 ## Acknowledgement
 
