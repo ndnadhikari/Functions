@@ -1,0 +1,230 @@
+## Author- Niranjan Adhikari
+## Loading Package 
+> library(readr) # use to read data
+> library(magrittr) # applicable for  forward pipe operator %>%
+> library(dplyr) ## use for mutate function
+> library(tidyr) ## use for spread function
+
+# Setting working directory 
+> setwd("C:/Users/ndnad/Desktop/Advace_R_Programming")
+
+# Reading csv file 
+> data <- read.csv("Final_assignment/MIE.csv")
+
+# Checking column type of data 
+> str(data)
+'data.frame':	120877 obs. of  5 variables:
+ $ id       : int  14 14 14 14 14 14 14 14 14 14 ...
+ $ visit    : int  0 0 0 0 0 0 0 0 0 0 ...
+ $ room     : Factor w/ 10 levels "bedroom","den",..: 1 1 1 1 1 1 1 1 1 1 ...
+ $ value    : num  6 6 2.75 2.75 2.75 2.75 6 6 2.75 2.75 ...
+ $ timepoint: int  53 54 55 56 57 58 59 60 61 62 ...
+
+# Since room is found to be factor so I want to convert to character 
+> data$room <- as.character(data$room)
+
+# Define the some essential generic functions 
+> setGeneric("print")
+[1] "print"
+
+> setGeneric("summary")
+[1] "summary"
+
+> setGeneric("subject", function(x,...){
++   standardGeneric("subject")
++ })
+[1] "subject"
+
+> setGeneric("visit", function(x,...){
++   standardGeneric("visit")
++ })
+[1] "visit"
+
+> setGeneric("room", function(x,...){
++   standardGeneric("room")
++ })
+[1] "room"
+
+# LongitudinalData Class and Methods
+> setClass("LongitudinalData",
++          representation(id = "numeric", 
++                         visit = "numeric",
++                         room = "character",
++                         value = "numeric",
++                         timepoint = "numeric"))
+
+## Define the print of longitudional data 
+> setMethod("print",
++           c(x = "LongitudinalData"),
++           function(x){
++             paste("Longitudinal dataset with", length(unique(x@id)), "subjects")
++           })
+[1] "print"
+
+## longitudional data function 
+> make_LD <- function(x) {
++   new("LongitudinalData", id = x$id, visit = x$visit,
++       room = x$room, value = x$value, timepoint = x$timepoint)
++ }
+
+## convert data into longitudional data 
+> x <- make_LD(data)
+> print(class(x))
+[1] "LongitudinalData"
+attr(,"package")
+[1] ".GlobalEnv"
+> print(x)
+[1] "Longitudinal dataset with 10 subjects"
+
+## A generic function for extracting subject-specific information
+> setClass("subject_class",
++          representation(id = "numeric", 
++                         visit = "numeric",
++                         room = "character",
++                         value = "numeric",
++                         timepoint = "numeric"))
+
+> setMethod("print",
++           c(x = "subject_class"),
++           function(x){
++             if (length(unique(x@id)) > 0) {
++               cat(paste("Subject ID:",unique(x@id)))
++             } else {
++               NULL
++             }
++           })
+[1] "print"
+
+> setMethod("subject",
++           c(x = "LongitudinalData"),
++           function(x,n){
++             new("subject_class", id = x@id[x@id == n], visit = x@visit[x@id == n],
++                 room = x@room[x@id == n], value = x@value[x@id == n],
++                 timepoint = x@timepoint[x@id == n])
++           })
+[1] "subject"
+
+> setMethod("summary",
++           c(object = "subject_class"),
++           function(object){
++             new("subject_summary", id = object@id, visit = object@visit, 
++                 room = object@room, value = object@value)
++           })
+[1] "summary"
+
+## Experiment of subject generic function 
+## Subject 8 doesn't exist
+> out_1 <- subject(x, 8)
+> print(out_1)
+NULL
+
+> out_2 <- subject(x, 64)
+> print(out_2)
+Subject ID: 64
+
+> out_3 <- subject(x, 64) %>% summary()
+> print(out_3)
+ID: 64 
+# A tibble: 3 x 4
+# Groups:   visit [3]
+  visit bedroom `family  room` `living room`
+* <chr>   <dbl>          <dbl>         <dbl>
+1 0        16.0           NA            19.8
+2 1        10.7           22.1          NA  
+3 2        40.6           NA            25.6
+
+# generic function for visit_class, method and summary 
+> setClass("visit_class",
++          representation(id = "numeric", 
++                         visit = "numeric",
++                         room = "character",
++                         value = "numeric",
++                         timepoint = "numeric"))
+
+> setMethod("visit",
++           c(x = "subject_class"),
++           function(x,n){
++             new("visit_class", id = x@id[x@visit == n], visit = x@visit[x@visit == n],
++                 room = x@room[x@visit == n], value = x@value[x@visit == n],
++                 timepoint = x@timepoint[x@visit == n])
++           })
+[1] "visit"
+
+> setMethod("print",
++           c(x = "visit_class"),
++           function(x){
++             cat(paste("ID:", unique(x@id)),"\n")
++             cat(paste("Visit:",unique(x@visit)),"\n")
++           })
+[1] "print"
+
+> setMethod("summary",
++           c(object = "visit_class"),
++           function(object){
++             new("room_summary", id = object@id, value = object@value)
++           })
+[1] "summary"
+
+## Experiment  of visit generic function
+> out_4 <- subject(x, 46) %>% visit(1)
+> print(out_4)
+ID: 46 
+Visit: 1 
+
+> out_5 <- subject(x, 46) %>% visit(1) %>% summary()
+> print(out_5)
+ID: 46 
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  2.750   2.750   6.000   8.151  11.000  79.000 
+
+## Room generic function 
+> setClass("room_class",
++          representation(id = "numeric", 
++                         visit = "numeric",
++                         room = "character",
++                         value = "numeric",
++                         timepoint = "numeric"))
+
+> setMethod("room",
++           c(x = "visit_class"),
++           function(x,n){
++             new("room_class", id = x@id[x@room == n], visit = x@visit[x@room == n],
++                 room = x@room[x@room == n], value = x@value[x@room == n],
++                 timepoint = x@timepoint[x@room == n])
++           })
+[1] "room"
+
+> setMethod("print",
++           c(x = "room_class"),
++           function(x){
++             cat(paste("ID:", unique(x@id)),"\n")
++             cat(paste("Visit:",unique(x@visit)),"\n")
++             cat(paste("Room:",unique(x@room)))
++           })
+[1] "print"
+
+> setMethod("summary",
++           c(object = "room_class"),
++           function(object){
++             new("room_summary", id = object@id, value = object@value)
++           })
+[1] "summary"
+
+## Experiment of room genric function 
+> out_6 <- subject(x, 46) %>% visit(1) %>% room("living room")
+> print(out_6)
+ID: 46 
+Visit: 1 
+Room: living room
+
+> out_7 <- subject(x, 46) %>% visit(1) %>% room("living room") %>% summary
+> print(out_7)
+ID: 46 
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  2.750   2.750   8.000   9.317  12.000  79.000 
+
+> out_8 <- subject(x, 46) %>% visit(0) %>% room("bedroom") %>% summary
+> print(out_8)
+ID: 46 
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+   2.75    2.75    7.00   34.89   45.00  576.00 
